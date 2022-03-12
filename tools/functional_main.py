@@ -183,16 +183,18 @@ def init_torch_model(arch_name, mode, cuda_mode, model_file_path=None):
     else:
         device = torch.device('cpu')
 
-    model = model.to(device)
-
     if model_file_path is not None:
         filename = model_file_path.format("best")
         print("Loading model: {}".format(filename))
         model.load_state_dict(torch.load(filename))
 
+    model = model.to(device)
+
+
     return model, device
 
 def run_train(data_path, out_dir,
+              startng_model=None,
               mode='pu',
               arch_name='PrismNet',
               # lr_scheduler='warmup', # Alternately 'cosine'?  ## Apparently unused?
@@ -204,8 +206,9 @@ def run_train(data_path, out_dir,
               early_stopping=20, ## Also apparently unused?
               tfboard=False,
               workers=6, cuda_mode=True,
+              seed=0
               ):
-
+    fix_seed(seed)
 
     data_dir = os.path.dirname(data_path)
     p_name = os.path.basename(data_path)
@@ -214,7 +217,7 @@ def run_train(data_path, out_dir,
     model_dir = datautils.make_directory(out_dir, "models")
     model_path = os.path.join(model_dir, identity + "_{}.pth")
 
-    model, device = init_torch_model(arch_name, mode, cuda_mode)
+    model, device = init_torch_model(arch_name, mode, cuda_mode, startng_model)
 
     train_loader = torch.utils.data.DataLoader(SeqicSHAPE(data_path),
                                                batch_size=batch_size, shuffle=True,
@@ -278,7 +281,9 @@ def run_eval(data_path, model_file, out_dir,
              batch_size=64,
              pos_weight=2,
              workers=6, cuda_mode=True,
+             seed=0
              ):
+    fix_seed(seed)
     p_name = os.path.basename(data_path)
     identity = p_name + "_" + arch_name + "_" + mode
 
@@ -303,8 +308,10 @@ def run_infer(infer_file, model_file,
               batch_size=64,
               pos_weight=2,
               workers=6, cuda_mode=True,
+              seed=0
               ):
     assert(os.path.exists(infer_file))
+    fix_seed(seed)
 
     p_name = os.path.basename(data_path)
 
@@ -326,8 +333,10 @@ def run_saliency(infer_file, model_file,
                  arch_name='PrismNet',
                  batch_size=64,
                  workers=6, cuda_mode=True,
+                 seed=0
                  ):
     assert(os.path.exists(infer_file))
+    fix_seed(seed)
 
     p_name = os.path.basename(data_path)
     identity = p_name + "_" + arch_name + "_" + mode
@@ -345,8 +354,11 @@ def run_saliency_img(infer_file, model_file,
                      arch_name='PrismNet',
                      batch_size=64,
                      workers=6, cuda_mode=True,
+                     seed=0
                      ):
     assert(os.path.exists(infer_file))
+    fix_seed(seed)
+
     p_name = os.path.basename(data_path)
     identity = p_name + "_" + arch_name + "_" + mode
     model, device = init_torch_model(arch_name, mode, cuda_mode, model_file)
@@ -362,8 +374,11 @@ def run_har(infer_file, model_file,
             arch_name='PrismNet',
             batch_size=64,
             workers=6, cuda_mode=True,
+            seed=0
             ):
     assert(os.path.exists(infer_file))
+    fix_seed(seed)
+
     p_name = os.path.basename(data_path)
     identity = p_name + "_" + arch_name + "_" + mode
     model, device = init_torch_model(arch_name, mode, cuda_mode, model_file)
