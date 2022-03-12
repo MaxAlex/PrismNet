@@ -7,7 +7,7 @@ from tqdm import tqdm
 import prismnet.model as arch
 from prismnet.utils import log_print, metrics, datautils
     
-def train(args, model, device, train_loader, criterion, optimizer):
+def train(model, device, train_loader, criterion, optimizer, batch_size):
     model.train()
     met = metrics.MLMetrics(objective='binary')
     for batch_idx, (x0, y0) in enumerate(train_loader):
@@ -28,7 +28,7 @@ def train(args, model, device, train_loader, criterion, optimizer):
 
     return met
 
-def validate(args, model, device, test_loader, criterion):
+def validate(model, device, test_loader, criterion):
     model.eval()
     y_all = []
     p_all = []
@@ -61,7 +61,7 @@ def validate(args, model, device, test_loader, criterion):
     
     return met, y_all, p_all
 
-def inference(args, model, device, test_loader):
+def inference(model, device, test_loader):
     model.eval()
     p_all = []
     with torch.no_grad():
@@ -77,12 +77,12 @@ def inference(args, model, device, test_loader):
     return p_all
 
 
-def compute_saliency(args, model, device, test_loader, identity):
+def compute_saliency(model, device, test_loader, identity, batch_size, out_dir):
     from prismnet.model import GuidedBackpropSmoothGrad
 
     model.eval()
 
-    saliency_dir = datautils.make_directory(args.out_dir, "out/saliency")
+    saliency_dir = datautils.make_directory(out_dir, "out/saliency")
     saliency_path = os.path.join(saliency_dir, identity+'.sal')
 
     # sgrad = SmoothGrad(model, device=device)
@@ -98,7 +98,7 @@ def compute_saliency(args, model, device, test_loader, identity):
         N, NS, _, _ = guided_saliency.shape # (N, 101, 1, 5)
         
         for i in range(N):
-            inr = batch_idx*args.batch_size + i
+            inr = batch_idx*batch_size + i
             str_sal = datautils.mat2str(np.squeeze(guided_saliency[i]))
             sal += "{}\t{:.6f}\t{}\n".format(inr, p_np[i], str_sal)
             
@@ -107,8 +107,10 @@ def compute_saliency(args, model, device, test_loader, identity):
     f.close()
     print(saliency_path)
 
+    return saliency_path
 
-def compute_saliency_img(args, model, device, test_loader, identity):
+
+def compute_saliency_img(model, device, test_loader, identity, batch_size, out_dir):
     from prismnet.model import GuidedBackpropSmoothGrad
     from prismnet.utils import visualize
 
@@ -147,8 +149,8 @@ def compute_saliency_img(args, model, device, test_loader, identity):
 
 
     prefix_n = len(str(len(test_loader.dataset)))
-    datautils.make_directory(args.out_dir, "out/imgs/")
-    imgs_dir = datautils.make_directory(args.out_dir, "out/imgs/"+identity)
+    datautils.make_directory(out_dir, "out/imgs/")
+    imgs_dir = datautils.make_directory(out_dir, "out/imgs/"+identity)
     imgs_path = imgs_dir+'/{:0'+str(prefix_n)+'d}_{:.3f}.pdf'
     saliency_path = os.path.join(imgs_dir, 'all.sal')
 
@@ -165,7 +167,7 @@ def compute_saliency_img(args, model, device, test_loader, identity):
         N, NS, _, _ = guided_saliency.shape # (N, 101, 1, 5)
         sal = ""
         for i in tqdm(range(N)):
-            inr = batch_idx*args.batch_size + i
+            inr = batch_idx*batch_size + i
             str_sal = datautils.mat2str(np.squeeze(guided_saliency[i]))
             sal += "{}\t{:.6f}\t{}\n".format(inr, p_np[i], str_sal)
             img_path = imgs_path.format(inr, p_np[i])
@@ -180,12 +182,17 @@ def compute_saliency_img(args, model, device, test_loader, identity):
         f.close()
         print(saliency_path)
 
+    else:
+        raise Exception("Saliency not written due to overwrite check")
+
+    return saliency_path
 
 
-def compute_high_attention_region(args, model, device, test_loader, identity):
+
+def compute_high_attention_region(model, device, test_loader, identity, batch_size, out_dir):
     from prismnet.model import GuidedBackpropSmoothGrad
 
-    har_dir = datautils.make_directory(args.out_dir, "out/har")
+    har_dir = datautils.make_directory(out_dir, "out/har")
     har_path = os.path.join(har_dir, identity+'.har')
 
     L = 20
@@ -202,15 +209,17 @@ def compute_high_attention_region(args, model, device, test_loader, identity):
         attention_region = guided_saliency.sum(dim=3)[:,0,:].to(device='cpu').numpy() # (N, 101, 1)
         N,NS = attention_region.shape # (N, 101)
         for i in range(N):
-            inr = batch_idx*args.batch_size + i
+            inr = batch_idx*batch_size + i
             iar = attention_region[i]
             ar_score = np.array([ iar[j:j+L].sum() for j in range(NS-L+1)])
             # import pdb; pdb.set_trace()
             highest_ind = np.argmax(iar)
             har += "{}\t{:.6f}\t{}\t{}\n".format(inr, p_np[i], highest_ind, highest_ind+L)
 
-    f = open(har_path,"w")
+    f = open(har_path, "w")
     f.write(har)
     f.close()
     print(har_path)
+
+    return har_path
 
