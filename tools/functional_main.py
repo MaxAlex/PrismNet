@@ -190,8 +190,8 @@ def init_torch_model(arch_name, mode, cuda_mode, model_file_path=None):
 
     model = model.to(device)
 
-
     return model, device
+
 
 def run_train(data_path, out_dir,
               startng_model=None,
@@ -272,6 +272,8 @@ def run_train(data_path, out_dir,
         log_print(line, color=color_best, attrs=['bold'])
 
     print("{} auc: {:.4f} acc: {:.4f}".format(p_name, best_auc, best_acc))
+
+    return model_path
 
     
     
