@@ -4,11 +4,17 @@ import matplotlib as mpl
 mpl.use("pdf")
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from scipy.misc import imresize
+# from scipy.misc import imresize
+from PIL import Image
 
 package_directory = os.path.dirname(os.path.abspath(__file__))
 acgu_path = os.path.join(package_directory,'acgu.npz')
 chars = np.load(acgu_path,allow_pickle=True)['data']
+
+
+def imresize(arr, size):
+    return np.array(Image.fromarray(arr).resize(size, Image.BICUBIC))
+
 
 def normalize_pwm(pwm, factor=None, MAX=None):
     if MAX is None:
