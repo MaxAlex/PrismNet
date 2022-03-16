@@ -13,7 +13,8 @@ chars = np.load(acgu_path,allow_pickle=True)['data']
 
 
 def imresize(arr, size):
-    return np.array(Image.fromarray(arr).resize(size, Image.BICUBIC))
+    pil_size = size[1], size[0]
+    return np.array(Image.fromarray(arr).resize(pil_size, Image.BICUBIC))
 
 
 def normalize_pwm(pwm, factor=None, MAX=None):
