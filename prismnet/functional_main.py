@@ -283,7 +283,7 @@ def run_eval(data_path, model_file, out_dir,
              batch_size=64,
              pos_weight=2,
              workers=6, cuda_mode=True,
-             seed=0
+             seed=0, use_structure=True
              ):
     fix_seed(seed)
     p_name = os.path.basename(data_path)
@@ -295,7 +295,8 @@ def run_eval(data_path, model_file, out_dir,
 
     test_loader = torch.utils.data.DataLoader(SeqicSHAPE(data_path, is_test=True),
                                               batch_size=batch_size * 8, shuffle=False,
-                                              num_workers=workers, pin_memory=cuda_mode)
+                                              num_workers=workers, pin_memory=cuda_mode,
+                                              use_structure=use_structure)
 
     print("Test  set:", len(test_loader.dataset))
 
@@ -310,7 +311,7 @@ def run_infer(infer_file, model_file,
               batch_size=64,
               pos_weight=2,
               workers=6, cuda_mode=True,
-              seed=0
+              seed=0, use_structure=True
               ):
     assert(os.path.exists(infer_file))
     fix_seed(seed)
@@ -323,7 +324,8 @@ def run_infer(infer_file, model_file,
 
     test_loader = torch.utils.data.DataLoader(SeqicSHAPE(infer_file, is_infer=True),
                                               batch_size=batch_size, shuffle=False,
-                                              num_workers=workers, pin_memory=cuda_mode)
+                                              num_workers=workers, pin_memory=cuda_mode,
+                                              use_structure=use_structure)
 
     p_all = inference(model, device, test_loader)
     identity = identity+"_"+ os.path.basename(infer_file).replace(".txt","")
@@ -335,7 +337,7 @@ def run_saliency(infer_file, model_file,
                  arch_name='PrismNet',
                  batch_size=64,
                  workers=6, cuda_mode=True,
-                 seed=0
+                 seed=0, use_structure=True
                  ):
     assert(os.path.exists(infer_file))
     fix_seed(seed)
@@ -346,7 +348,8 @@ def run_saliency(infer_file, model_file,
 
     test_loader = torch.utils.data.DataLoader(SeqicSHAPE(infer_file, is_infer=True),
                                               batch_size=batch_size, shuffle=False,
-                                              num_workers=workers, pin_memory=cuda_mode)
+                                              num_workers=workers, pin_memory=cuda_mode,
+                                              use_structure=use_structure)
     return compute_saliency(model, device, test_loader, identity, batch_size, out_dir)
 
 
