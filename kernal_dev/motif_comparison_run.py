@@ -36,7 +36,7 @@ def align_callback(a1, a2):
     elif a1 == a2:
         return 1
     else:
-        return -0
+        return -0.1
 
 
 
@@ -44,13 +44,15 @@ def align_callback(a1, a2):
 def shuffle_string(thing):
     foo = list(thing)
     shuffle(foo)
-    return ''.join(foo)
+    bar = ''.join(foo)
+    assert(bar != thing)
+    return bar
 
 def align_to_sequence(motif, sequence):
-    aln = pairwise2.align.localcd(motif, sequence, align_callback, -999, -999, -999, -999)
+    aln = pairwise2.align.localcd(motif, sequence, align_callback, -999, -999, -1, -1)
     scores = [x.score for x in aln]
     # print(aln)
-    return max(scores) / min(len(motif), len(sequence))
+    return max(scores)/min(len(motif), len(sequence))
 
 
 def generate_scores_table(prot):
@@ -59,14 +61,14 @@ def generate_scores_table(prot):
     print(prot)
     tab = load_with_infer(prot)
     tab.to_csv(outputfile)
-    for m_index, motif in enumerate(prot_motifs[prot]):
+    for m_index, motif in enumerate(sorted(prot_motifs[prot])):
         motif = motif.replace('U', 'T')
         tab['M%d_scores' % m_index] = tab.Seq.apply(lambda x: align_to_sequence(motif, x))
+        print('\t%s %s' % (m_index, motif))
 
-        cont_motif = shuffle_string(motif)
-        tab['M%d_random_control' % m_index] = tab.Seq.apply(lambda x: align_to_sequence(cont_motif, x))
-
-        print('\t%s %s' % (motif, cont_motif))
+        # cont_motif = shuffle_string(motif)
+        # tab['M%d_random_control' % m_index] = tab.Seq.apply(lambda x: align_to_sequence(cont_motif, x))
+        # print('\t%s %s' % (motif, cont_motif))
 
     tab.to_csv(outputfile)
 
