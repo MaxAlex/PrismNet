@@ -93,6 +93,10 @@ def compute_saliency(model, device, test_loader, identity, batch_size, out_dir):
         output = model(X)
         prob = torch.sigmoid(output)
         p_np = prob.to(device='cpu').detach().numpy().squeeze()
+
+        if len(p_np.shape) == 0:
+            p_np = p_np.reshape(-1)
+
         guided_saliency = sgrad.get_batch_gradients(X, Y)
         # import pdb; pdb.set_trace()
         N, NS, _, _ = guided_saliency.shape # (N, 101, 1, 5)
@@ -161,6 +165,10 @@ def compute_saliency_img(model, device, test_loader, identity, batch_size, out_d
         output = model(X)
         prob = torch.sigmoid(output)
         p_np = prob.to(device='cpu').detach().numpy().squeeze()
+
+        if len(p_np.shape) == 0:  # Using squeeze() was NOT THE CORRECT WAY
+            p_np = p_np.reshape(-1)
+
         guided_saliency  = sgrad.get_batch_gradients(X, Y)
         mul_saliency = copy.deepcopy(guided_saliency)
         mul_saliency[:,:,:,:4] =  guided_saliency[:,:,:,:4] * X[:,:,:,:4]
@@ -176,14 +184,12 @@ def compute_saliency_img(model, device, test_loader, identity, batch_size, out_d
                 X[i,0].to(device='cpu').detach().numpy(), 
                 mul_saliency[i,0].to(device='cpu').numpy(), 
                 outdir=img_path)
-    if not os.path.exists(saliency_path):     
-        f = open(saliency_path,"w")
-        f.write(sal)
-        f.close()
-        print(saliency_path)
 
-    else:
-        raise Exception("Saliency not written due to overwrite check")
+
+    f = open(saliency_path,"w")
+    f.write(sal)
+    f.close()
+    print(saliency_path)
 
     return saliency_path
 
