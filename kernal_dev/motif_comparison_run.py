@@ -54,7 +54,7 @@ def align_to_sequence(motif, sequence):
 
 
 def generate_scores_table(prot):
-    outputfile = '/data/workspace/deep_rna/prismnet/test_inferences/motif_match_checks/%s_table.csv'
+    outputfile = '/data/workspace/deep_rna/prismnet/test_inferences/motif_match_checks/%s_table.csv' % prot
 
     print(prot)
     tab = load_with_infer(prot)
