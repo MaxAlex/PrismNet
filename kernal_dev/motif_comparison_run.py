@@ -50,7 +50,7 @@ def align_to_sequence(motif, sequence):
     aln = pairwise2.align.localcd(motif, sequence, align_callback, -999, -999, -999, -999)
     scores = [x.score for x in aln]
     # print(aln)
-    return max(scores) # / min(len(motif), len(sequence))
+    return max(scores) / min(len(motif), len(sequence))
 
 
 def generate_scores_table(prot):
@@ -60,6 +60,7 @@ def generate_scores_table(prot):
     tab = load_with_infer(prot)
     tab.to_csv(outputfile)
     for m_index, motif in enumerate(prot_motifs[prot]):
+        motif = motif.replace('U', 'T')
         tab['M%d_scores' % m_index] = tab.Seq.apply(lambda x: align_to_sequence(motif, x))
 
         cont_motif = shuffle_string(motif)
