@@ -382,11 +382,12 @@ def load_testset_txt_only_seq(filepath, test, return_trans_id=False, seq_length=
 
 
 
-def load_testset_txt(filepath, use_structure=True, seq_length=101):
+def load_testset_txt(filepath, use_structure=True, seq_length=101,
+                     load_npz=True, save_npz=True):
     test = {}
 
     print("Reading inference file:", filepath)
-    if os.path.exists(filepath+"_test.npz"):
+    if load_npz and os.path.exists(filepath+"_test.npz"):
         print("loading from npz.")        
        
         f = np.load(filepath+"_test.npz", allow_pickle=True)
@@ -426,9 +427,13 @@ def load_testset_txt(filepath, use_structure=True, seq_length=101):
 
     test['inputs']  = inputs
     test['targets'] = targets
-    print("Saving into npz.")
-    np.savez_compressed(filepath+"_test.npz", inputs=inputs, targets=targets)
-    print("Saved.")
+    if save_npz:
+        print("Saving into npz.")
+        np.savez_compressed(filepath+"_test.npz", inputs=inputs, targets=targets)
+        print("Saved.")
+    else:
+        if os.path.exists(filepath+"_test.npz"):
+            print("NOTE: Did not save .npz, but one does exist at %s" % filepath+"_test.npz")
 
     return test
 

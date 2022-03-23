@@ -5,7 +5,8 @@ import torch
 import torch.utils.data
 
 class SeqicSHAPE(torch.utils.data.Dataset):
-    def __init__(self, data_path, is_test=False, is_infer=False, use_structure=True):
+    def __init__(self, data_path, is_test=False, is_infer=False, use_structure=True,
+                 load_npz=False, save_npz=False):
         """data loader
         
         Args:
@@ -13,7 +14,8 @@ class SeqicSHAPE(torch.utils.data.Dataset):
             is_test (bool, optional): testset or not. Defaults to False.
         """
         if is_infer:
-            self.dataset = self.__load_infer_data__(data_path, use_structure=use_structure)
+            self.dataset = self.__load_infer_data__(data_path, use_structure=use_structure,
+                                                    load_npz=load_npz, save_npz=save_npz)
             print("infer data: ", self.__len__()," use_structure: ", use_structure)
         else:
             dataset = h5py.File(data_path, 'r')
@@ -45,9 +47,11 @@ class SeqicSHAPE(torch.utils.data.Dataset):
 
         
 
-    def __load_infer_data__(self, data_path, use_structure=True):
+    def __load_infer_data__(self, data_path, use_structure=True,
+                            load_npz=True, save_npz=True):
         from prismnet.utils import datautils
-        dataset = datautils.load_testset_txt(data_path, use_structure=use_structure, seq_length=101)
+        dataset = datautils.load_testset_txt(data_path, use_structure=use_structure, seq_length=101,
+                                             load_npz, save_npz)
         return dataset
        
     
