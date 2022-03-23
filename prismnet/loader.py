@@ -35,8 +35,8 @@ class SeqicSHAPE(torch.utils.data.Dataset):
             labels, nums = np.unique(Y_test,return_counts=True)
             print("test:", labels, nums)
 
-            train = self.__prepare_data__(train)
-            test  = self.__prepare_data__(test)
+            train = self.__prepare_data__(train, use_structure=use_structure)
+            test  = self.__prepare_data__(test, use_structure=use_structure)
 
             if is_test:
                 self.dataset = test
@@ -51,12 +51,18 @@ class SeqicSHAPE(torch.utils.data.Dataset):
         return dataset
        
     
-    def __prepare_data__(self, data):
+    def __prepare_data__(self, data, use_structure=True):
         inputs    = data['inputs'][:,:,:,:4]
-        structure = data['inputs'][:,:,:,4:]
-        structure = np.expand_dims(structure[:,:,:,0], axis=3)
-        inputs    = np.concatenate([inputs, structure], axis=3)
-        data['inputs']  = inputs
+
+        if use_structure:
+            structure = data['inputs'][:, :, :, 4:]
+            structure = np.expand_dims(structure[:, :, :, 0], axis=3)
+            inputs = np.concatenate([inputs, structure], axis=3)
+        else:
+            # inputs = inputs  ## Equivalently...
+            pass
+
+        data['inputs'] = inputs
         return data
 
     def __to_sequence__(self, x):
