@@ -206,7 +206,7 @@ def run_train(data_path, out_dir,
               early_stopping=20, ## Also apparently unused?
               tfboard=False,
               workers=6, cuda_mode=True,
-              seed=0
+              seed=0, use_structure=True
               ):
     fix_seed(seed)
 
@@ -219,11 +219,13 @@ def run_train(data_path, out_dir,
 
     model, device = init_torch_model(arch_name, mode, cuda_mode, startng_model)
 
-    train_loader = torch.utils.data.DataLoader(SeqicSHAPE(data_path),
+    train_loader = torch.utils.data.DataLoader(SeqicSHAPE(data_path,
+                                                          use_structure=use_structure),
                                                batch_size=batch_size, shuffle=True,
                                                num_workers=workers, pin_memory=cuda_mode)
 
-    test_loader = torch.utils.data.DataLoader(SeqicSHAPE(data_path, is_test=True),
+    test_loader = torch.utils.data.DataLoader(SeqicSHAPE(data_path, is_test=True,
+                                                         use_structure=use_structure),
                                               batch_size=batch_size*8, shuffle=False,
                                               num_workers=workers, pin_memory=cuda_mode)
     print("Train set:", len(train_loader.dataset))
