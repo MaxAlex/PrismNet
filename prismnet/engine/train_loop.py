@@ -135,7 +135,7 @@ def compute_saliency(model, device, test_loader, identity, batch_size, out_dir):
     return saliency_path
 
 
-def compute_saliency_img(model, device, test_loader, identity, batch_size, out_dir):
+def compute_saliency_img(model, device, test_loader, identity, batch_size, out_dir, img_name):
     from prismnet.model import GuidedBackpropSmoothGrad
     from prismnet.utils import visualize
 
@@ -176,7 +176,8 @@ def compute_saliency_img(model, device, test_loader, identity, batch_size, out_d
     prefix_n = len(str(len(test_loader.dataset)))
     datautils.make_directory(out_dir, "out/imgs/")
     imgs_dir = datautils.make_directory(out_dir, "out/imgs/"+identity)
-    imgs_path = imgs_dir+'/{:0'+str(prefix_n)+'d}_{:.3f}.pdf'
+    # imgs_path = imgs_dir+'/{:0'+str(prefix_n)+'d}_{:.3f}..pdf'
+
     saliency_path = os.path.join(imgs_dir, 'all.sal')
 
     # sgrad = SmoothGrad(model, device=device)
@@ -199,8 +200,9 @@ def compute_saliency_img(model, device, test_loader, identity, batch_size, out_d
             inr = batch_idx*batch_size + i
             str_sal = datautils.mat2str(np.squeeze(guided_saliency[i]))
             sal += "{}\t{:.6f}\t{}\n".format(inr, p_np[i], str_sal)
-            img_path = imgs_path.format(inr, p_np[i])
+            # img_path = imgs_path.format(inr, p_np[i])
             # import pdb; pdb.set_trace()
+            img_path = os.path.join(imgs_dir, '%s_%d.pdf' % (img_name, i))
             saliency_img(
                 X[i,0].to(device='cpu').detach().numpy(), 
                 mul_saliency[i,0].to(device='cpu').numpy(), 
