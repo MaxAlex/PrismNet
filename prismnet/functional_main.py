@@ -447,7 +447,7 @@ def run_saliency(infer_file, model_file,
 
 
 def run_saliency_img(infer_file, model_file,
-                     data_path, out_dir,
+                     label, out_dir,
                      mode='pu',
                      arch_name='PrismNet',
                      batch_size=64,
@@ -457,8 +457,7 @@ def run_saliency_img(infer_file, model_file,
     assert(os.path.exists(infer_file))
     fix_seed(seed)
 
-    p_name = os.path.basename(data_path)
-    identity = p_name + "_" + arch_name + "_" + mode
+    identity = label + "_" + arch_name + "_" + mode
     model, device = init_torch_model(arch_name, mode, cuda_mode, model_file)
 
     test_loader = torch.utils.data.DataLoader(SeqicSHAPE(infer_file, is_infer=True,
