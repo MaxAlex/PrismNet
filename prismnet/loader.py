@@ -51,7 +51,7 @@ class SeqicSHAPE(torch.utils.data.Dataset):
                             load_npz=True, save_npz=True):
         from prismnet.utils import datautils
         dataset = datautils.load_testset_txt(data_path, use_structure=use_structure, seq_length=101,
-                                             load_npz, save_npz)
+                                             load_npz=load_npz, save_npz=save_npz)
         return dataset
        
     
