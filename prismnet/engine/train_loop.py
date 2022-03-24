@@ -175,7 +175,7 @@ def compute_saliency_img(model, device, test_loader, identity, batch_size, out_d
 
     prefix_n = len(str(len(test_loader.dataset)))
     datautils.make_directory(out_dir, "out/imgs/")
-    imgs_dir = datautils.make_directory(out_dir, "out/imgs/"+identity)
+    imgs_dir = datautils.make_directory(out_dir, "out/imgs")
     # imgs_path = imgs_dir+'/{:0'+str(prefix_n)+'d}_{:.3f}..pdf'
 
     saliency_path = os.path.join(imgs_dir, 'all.sal')
@@ -202,7 +202,7 @@ def compute_saliency_img(model, device, test_loader, identity, batch_size, out_d
             sal += "{}\t{:.6f}\t{}\n".format(inr, p_np[i], str_sal)
             # img_path = imgs_path.format(inr, p_np[i])
             # import pdb; pdb.set_trace()
-            img_path = os.path.join(imgs_dir, '%s_%d.pdf' % (img_name, i))
+            img_path = os.path.join(imgs_dir, '%s__%d.pdf' % (identity, i))
             saliency_img(
                 X[i,0].to(device='cpu').detach().numpy(), 
                 mul_saliency[i,0].to(device='cpu').numpy(), 
