@@ -14,11 +14,13 @@ import prismnet.model as prismnet_model_arch
 from prismnet import train, validate, inference, log_print, compute_saliency, compute_saliency_img, compute_high_attention_region
 #compute_high_attention_region
 
-# from prismnet.engine.train_loop import 
+from prismnet.engine.train_loop import optimize_input
+
 from prismnet.model.utils import GradualWarmupScheduler
 from prismnet.loader import SeqicSHAPE
 from prismnet.utils import datautils
 
+from itertools import chain
 
 
 def fix_seed(seed):
@@ -194,7 +196,7 @@ def init_torch_model(arch_name, mode, cuda_mode, model_file_path=None):
 
 
 def run_train(data_path, out_dir,
-              startng_model=None,
+              starting_model=None,
               mode='pu',
               arch_name='PrismNet',
               # lr_scheduler='warmup', # Alternately 'cosine'?  ## Apparently unused?
@@ -217,7 +219,7 @@ def run_train(data_path, out_dir,
     model_dir = datautils.make_directory(out_dir, "models")
     model_path = os.path.join(model_dir, identity + "_{}.pth")
 
-    model, device = init_torch_model(arch_name, mode, cuda_mode, startng_model)
+    model, device = init_torch_model(arch_name, mode, cuda_mode, starting_model)
 
     train_loader = torch.utils.data.DataLoader(SeqicSHAPE(data_path,
                                                           use_structure=use_structure),
@@ -277,7 +279,97 @@ def run_train(data_path, out_dir,
 
     return model_path
 
-    
+
+def run_seq_opt(data_path, data_output,
+                starting_model,
+                mode='pu',
+                arch_name='PrismNet',
+                # lr_scheduler='warmup', # Alternately 'cosine'?  ## Apparently unused?
+                lr=0.0001,
+                batch_size=64,
+                nepochs=200,
+                pos_weight=2,
+                weight_decay=1e-6,
+                early_stopping=20, ## Also apparently unused?
+                tfboard=False,
+                workers=6, cuda_mode=True,
+                seed=0, use_structure=True,
+                save_reference_input_to=None,
+                ):
+    fix_seed(seed)
+
+    data_dir = os.path.dirname(data_path)
+    p_name = os.path.basename(data_path)
+
+    model, device = init_torch_model(arch_name, mode, cuda_mode, starting_model)
+
+    train_loader = torch.utils.data.DataLoader(SeqicSHAPE(data_path,
+                                                          use_structure=use_structure),
+                                               batch_size=batch_size, shuffle=True,
+                                               num_workers=workers, pin_memory=cuda_mode)
+
+    test_loader = torch.utils.data.DataLoader(SeqicSHAPE(data_path, is_test=True,
+                                                         use_structure=use_structure),
+                                              batch_size=batch_size*8, shuffle=False,
+                                              num_workers=workers, pin_memory=cuda_mode)
+    print("Train set:", len(train_loader.dataset))
+    print("Test  set:", len(test_loader.dataset))
+
+    # return train_loader, test_loader
+
+    # DataLoader objects don't store changes to the input (they re-load on each iter, I guess?)
+    # Also we're not using train/test sets here (how would you even do that?) so all into one
+    # list of Tensors
+    # putative_targets = list(chain(*[x[1] for x in train_loader] + [x[1] for x in test_loader]))
+    input_list = list(chain(*[x[0] for x in train_loader] + [x[0] for x in test_loader]))
+    input_tensor = torch.stack(input_list, 0)
+    print(input_tensor.shape)
+
+    if save_reference_input_to:
+        with open(save_reference_input_to, 'wb') as out:
+            torch.save(input_tensor, out)
+
+    # Set all targets to one, since we're optimizing for inputs that lead to one,
+    # and/so we want good inputs to have low loss
+    aspirational_targets = torch.ones(size = (input_tensor.shape[0], 1))
+
+    input_tensor = input_tensor.to(device)
+    aspirational_targets = aspirational_targets.to(device)
+
+    criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(pos_weight))
+
+    optimizer = torch.optim.Adam([input_tensor], lr=lr, betas=(0.9, 0.999), weight_decay=weight_decay)
+    scheduler = GradualWarmupScheduler(
+        optimizer, multiplier=8, total_epoch=float(nepochs), after_scheduler=None)
+
+    # TODO: there probably actually is a notion of train+test that could be applied here; namely, test the
+    # optimized inputs against a different model, to see how well the inputs generalize.
+
+    best_auc = 0
+    best_acc = 0
+    best_epoch = 0
+    for epoch in range(1, nepochs + 1):
+        t_met       = optimize_input(model, input_tensor, aspirational_targets, criterion, optimizer)
+        scheduler.step(epoch)
+        lr = scheduler.get_lr()[0]
+
+        with open(data_output, 'wb') as out:
+            torch.save(input_tensor, out)
+            print("Wrote tensor to %s" % data_output)
+
+        if tfboard and writer is not None:
+            writer.add_scalar('loss/train', t_met.other[0], epoch)
+            writer.add_scalar('acc/train', t_met.acc, epoch)
+            writer.add_scalar('AUC/train', t_met.auc, epoch)
+            writer.add_scalar('lr', lr, epoch)
+        line='{} \t Train Epoch: {}     avg.loss: {:.4f} Acc: {:.2f}%, AUC: {:.4f} lr: {:.6f}'.format(
+            p_name, epoch, t_met.other[0], t_met.acc, t_met.auc, lr)
+        log_print(line, color='green', attrs=['bold'])
+
+    print("{} auc: {:.4f} acc: {:.4f}".format(p_name, best_auc, best_acc))
+
+    return data_output
+
     
 def run_eval(data_path, model_file, out_dir,
              mode='pu',

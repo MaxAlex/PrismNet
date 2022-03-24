@@ -40,11 +40,11 @@ def read_csv(path):
 #
 # print(name)
 
-def convert(name, is_bin, is_ver, data_path,
-            max_length=101, only_pos=False, binary=True):
+def convert(input_file, is_bin=1, in_ver=5,
+            max_length=101):
 
-    outfile = name+'.h5'
-    sequences, structs, targets = read_csv(os.path.join(data_path, name+'.tsv'))
+    sequences, structs, targets = read_csv(input_file)
+    outfile = input_file.replace('.tsv', '.h5')
 
     # combine inpute data
     one_hot = datautils.convert_one_hot(sequences, max_length)
@@ -70,13 +70,12 @@ def convert(name, is_bin, is_ver, data_path,
 
     target_data_type = np.int32 if is_bin=="1" else np.float32
     # save dataset
-    save_path = os.path.join(data_path, outfile)
-    print(name, data.shape, len(train[0]), len(test[0]), test[1].max(), test[1].min())
+    print(data.shape, len(train[0]), len(test[0]), test[1].max(), test[1].min())
     # print('saving dataset: ', save_path)
-    with h5py.File(save_path, "w") as f:
+    with h5py.File(outfile, "w") as f:
         dset = f.create_dataset("X_train", data=train[0].astype(np.float32), compression="gzip")
         dset = f.create_dataset("Y_train", data=train[1].astype(target_data_type), compression="gzip")
         dset = f.create_dataset("X_test", data=test[0].astype(np.float32), compression="gzip")
         dset = f.create_dataset("Y_test", data=test[1].astype(target_data_type), compression="gzip")
 
-    return save_path
+    return outfile
