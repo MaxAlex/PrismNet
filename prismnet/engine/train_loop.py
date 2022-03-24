@@ -28,6 +28,27 @@ def train(model, device, train_loader, criterion, optimizer, batch_size):
 
     return met
 
+
+def optimize_input(model, input_tensor, target_tensor, criterion, optimizer):
+    model.train(False)  # Not setting to train mode, setting to eval mode (??????)
+    met = metrics.MLMetrics(objective='binary')
+
+    print(input_tensor.shape)
+    input_tensor.requires_grad_(True)
+    optimizer.zero_grad()
+    output = model(input_tensor)
+    loss = criterion(output, target_tensor)
+    prob = torch.sigmoid(output)
+
+    y_np = target_tensor.to(device='cpu', dtype=torch.long).detach().numpy()
+    p_np = prob.to(device='cpu').detach().numpy()
+    met.update(y_np, p_np, [loss.item()])
+    loss.backward()
+    # torch.nn.utils.clip_grad_norm_(input_tensor.parameters(), 5)
+    optimizer.step()
+
+    return met
+
 def validate(model, device, test_loader, criterion):
     model.eval()
     y_all = []
@@ -210,6 +231,10 @@ def compute_high_attention_region(model, device, test_loader, identity, batch_si
         output = model(X)
         prob = torch.sigmoid(output)
         p_np = prob.to(device='cpu').detach().numpy().squeeze()
+
+        if len(p_np.shape) == 0:
+            p_np = p_np.reshape(-1)
+
         guided_saliency  = sgrad.get_batch_gradients(X, Y)
         
         attention_region = guided_saliency.sum(dim=3)[:,0,:].to(device='cpu').numpy() # (N, 101, 1)
