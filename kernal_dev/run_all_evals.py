@@ -19,7 +19,8 @@ p_h5 = {os.path.basename(x).split('_')[0]: x for x in h5_input}
 
 def run_infer_instance(prot):
     run_infer(p_tsv[prot], p_model[prot], 'March21_run',
-              '/data/workspace/deep_rna/prismnet/test_inferences', cuda_mode=False)
+              '/data/workspace/deep_rna/prismnet/test_inferences', cuda_mode=False,
+              workers=0)
 
 def run_train_instance(prot):
     prism.run_train(p_h5, '/data/workspace/temp/nonstructure',
@@ -36,5 +37,6 @@ if __name__ == '__main__':
     all_prots = {os.path.basename(x).split('_')[0] for x in model_files}
 
     multiprocessing.Pool(8).map(run_infer_instance, (all_prots - rbpdb_prots))
+    #list(map(run_infer_instance, (all_prots - rbpdb_prots)))
     print("Done.")
 
