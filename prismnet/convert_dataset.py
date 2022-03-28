@@ -70,7 +70,7 @@ def convert(input_file, is_bin=1, in_ver=5,
 
     target_data_type = np.int32 if is_bin=="1" else np.float32
     # save dataset
-    print(data.shape, len(train[0]), len(test[0]), test[1].max(), test[1].min())
+    # print(data.shape, len(train[0]), len(test[0]), test[1].max(), test[1].min())
     # print('saving dataset: ', save_path)
     with h5py.File(outfile, "w") as f:
         dset = f.create_dataset("X_train", data=train[0].astype(np.float32), compression="gzip")

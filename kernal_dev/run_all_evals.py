@@ -21,6 +21,12 @@ def run_infer_instance(prot):
     run_infer(p_tsv[prot], p_model[prot], 'March21_run',
               '/data/workspace/deep_rna/prismnet/test_inferences', cuda_mode=False)
 
+def run_train_instance(prot):
+    prism.run_train(p_h5, '/data/workspace/temp/nonstructure',
+                                                           mode='seq', arch_name='PrismNet',
+                                                           cuda_mode=False, use_structure=False)
+
+    
 if __name__ == '__main__':
     # Skipping these, already done
     rbpdb_prots = {'TRA2A', 'TIAL1', 'HNRNPD', 'FUS', 'QKI', 'LSM11', 'HNRNPF', 'TARDBP', 'IGF2BP1', 'PCBP1',

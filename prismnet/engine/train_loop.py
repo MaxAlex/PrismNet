@@ -135,7 +135,7 @@ def compute_saliency(model, device, test_loader, identity, batch_size, out_dir):
     return saliency_path
 
 
-def compute_saliency_img(model, device, test_loader, identity, batch_size, out_dir, img_name):
+def compute_saliency_img(model, device, test_loader, identity, batch_size, out_dir):
     from prismnet.model import GuidedBackpropSmoothGrad
     from prismnet.utils import visualize
 

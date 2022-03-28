@@ -338,7 +338,8 @@ def run_seq_opt(data_path, data_output,
 
     criterion = nn.BCEWithLogitsLoss(pos_weight=torch.tensor(pos_weight))
 
-    optimizer = torch.optim.Adam([input_tensor], lr=lr, betas=(0.9, 0.999), weight_decay=weight_decay)
+    optimizer = torch.optim.Adam([input_tensor], lr=lr,
+                                 betas=(0.9, 0.999), weight_decay=weight_decay)
     scheduler = GradualWarmupScheduler(
         optimizer, multiplier=8, total_epoch=float(nepochs), after_scheduler=None)
 
@@ -397,8 +398,8 @@ def run_eval(data_path, model_file, out_dir,
     print("> eval {} auc: {:.4f} acc: {:.4f}".format(p_name, met.auc, met.acc))
     return save_evals(out_dir, identity, p_name, p_all, y_all, met)
 
-def run_infer(infer_file, model_file,
-              data_path, out_dir,
+def run_infer(data_path, model_file,
+              output_name, out_dir,
               mode='pu',
               arch_name='PrismNet',
               batch_size=64,
@@ -406,22 +407,22 @@ def run_infer(infer_file, model_file,
               workers=6, cuda_mode=True,
               seed=0, use_structure=True
               ):
-    assert(os.path.exists(infer_file))
+    assert(os.path.exists(data_path))
     fix_seed(seed)
 
-    p_name = os.path.basename(data_path)
+    p_name = output_name
 
     identity = p_name + "_" + arch_name + "_" + mode
 
     model, device = init_torch_model(arch_name, mode, cuda_mode, model_file)
 
-    test_loader = torch.utils.data.DataLoader(SeqicSHAPE(infer_file, is_infer=True,
+    test_loader = torch.utils.data.DataLoader(SeqicSHAPE(data_path, is_infer=True,
                                                          use_structure=use_structure),
                                               batch_size=batch_size, shuffle=False,
                                               num_workers=workers, pin_memory=cuda_mode)
 
     p_all = inference(model, device, test_loader)
-    identity = identity+"_"+ os.path.basename(infer_file).replace(".txt","")
+    identity = identity+"_"+ os.path.basename(data_path).replace(".txt","")
     return save_infers(out_dir, identity, p_all)
 
 def run_saliency(infer_file, model_file,
