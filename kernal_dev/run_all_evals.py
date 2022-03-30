@@ -94,6 +94,11 @@ backup_dir = '/data/workspace/temp/model_eval_backups'
 
 def run_model_on_stuff(model):
     backup_file = os.path.join(backup_dir, os.path.basename(model).split('.')[0] + '_evals.csv')
+    temp_dir = os.path.join('/data/workspace/temp/prismnet_temps/%s' % os.path.basename(model).split('.')[0])
+    try:
+        os.mkdir(temp_dir)
+    except:
+        continue
     if os.path.exists(backup_file):
         tab = pd.read_csv(backup_file).set_index('Name')
         evals.append(tab)
