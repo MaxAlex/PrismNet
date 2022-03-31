@@ -98,7 +98,7 @@ def inference(model, device, test_loader):
     return p_all
 
 
-def compute_saliency(model, device, test_loader, identity, batch_size, out_dir):
+def compute_saliency(model, device, test_loader, identity, batch_size, out_dir, only_seq):
     from prismnet.model import GuidedBackpropSmoothGrad
 
     model.eval()
@@ -107,7 +107,7 @@ def compute_saliency(model, device, test_loader, identity, batch_size, out_dir):
     saliency_path = os.path.join(saliency_dir, identity+'.sal')
 
     # sgrad = SmoothGrad(model, device=device)
-    sgrad = GuidedBackpropSmoothGrad(model, device=device)
+    sgrad = GuidedBackpropSmoothGrad(model, device=device, only_seq=only_seq)
     sal = ""
     for batch_idx, (x0, y0) in enumerate(test_loader):
         X, Y = x0.float().to(device), y0.to(device).float()

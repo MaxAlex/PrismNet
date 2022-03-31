@@ -444,7 +444,9 @@ def run_saliency(infer_file, model_file,
                                                          use_structure=use_structure),
                                               batch_size=batch_size, shuffle=False,
                                               num_workers=workers, pin_memory=cuda_mode)
-    return compute_saliency(model, device, test_loader, identity, batch_size, out_dir)
+
+    only_seq = mode == 'seq'
+    return compute_saliency(model, device, test_loader, identity, batch_size, out_dir, only_seq)
 
 
 def run_saliency_img(infer_file, model_file,
