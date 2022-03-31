@@ -124,8 +124,11 @@ def compute_saliency(model, device, test_loader, identity, batch_size, out_dir, 
         
         for i in range(N):
             inr = batch_idx*batch_size + i
-            str_sal = datautils.mat2str(np.squeeze(guided_saliency[i]))
-            sal += "{}\t{:.6f}\t{}\n".format(inr, p_np[i], str_sal)
+            # str_sal = datautils.mat2str(np.squeeze(guided_saliency[i]))
+            sub_sals = []
+            for base in range(3):
+                sub_sals.append(','.join([str(x) for x in guided_saliency[i][0, :, base]]))
+            sal += "{}\t{:.6f}\t{}\n".format(inr, p_np[i], '\t'.join(sub_sals))
             
     f = open(saliency_path,"w")
     f.write(sal)
