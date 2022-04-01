@@ -399,6 +399,7 @@ def load_testset_txt(filepath, use_structure=True, seq_length=101,
     in_ver = 5
     seqs = []
     strs = []
+    scores = []
     with open(filepath,"r") as f:
         for line in f.readlines():
             line=line.strip('\n').split('\t')
@@ -407,6 +408,7 @@ def load_testset_txt(filepath, use_structure=True, seq_length=101,
             seqs.append(line[2])
             if use_structure:
                 strs.append(line[3])
+            scores.append(line[4])
     in_seq = convert_one_hot(seqs, seq_length)
     
     if use_structure:
@@ -421,9 +423,12 @@ def load_testset_txt(filepath, use_structure=True, seq_length=101,
         input = in_seq
 
     inputs = np.expand_dims(input, axis=3).transpose([0, 3, 2, 1])
-    targets = np.ones((in_seq.shape[0],1))
 
-    targets[in_seq.shape[0]-1]=0
+    ## WTF IS THIS???????????????  JUST IGNORE THE LABELS? YOU THINK THAT'S A GOOD IDEA???
+    # targets = np.ones((in_seq.shape[0],1))
+    # targets[in_seq.shape[0]-1]=0
+
+    targets = np.array(scores)
 
     test['inputs']  = inputs
     test['targets'] = targets
